@@ -3,7 +3,7 @@ import subprocess
 import pandas as pd
 import os
 import sys
-import time
+ # import inutilisé supprimé
 import shutil
 import io
 import altair as alt
@@ -774,7 +774,7 @@ def generate_pdf_report_reportlab(df_p, df_s, df_c):
         return None
 
     import io
-    from reportlab.lib import colors
+    # import inutilisé supprimé
 
     buffer = io.BytesIO()
     width, height = A4
