@@ -1,12 +1,3 @@
-C'est un problème classique de copier-coller : il semble que vous n'ayez copié que la première partie du code (l'en-tête et le diagramme), et que le reste ait été oublié lors de la sélection.
-
-Le diagramme s'affiche correctement, ce qui prouve que le bloc Mermaid est bien fermé, mais le fichier s'arrête brusquement juste après.
-
-Voici à nouveau **le code complet**. Assurez-vous de bien **tout copier jusqu'à la toute dernière ligne** (là où il est écrit `Built by YAadnane`).
-
------
-
-````markdown
 # 🚀 RedditPulse Analytics
 > **Decode the Hivemind. Visualize the Sentiment.**
 
