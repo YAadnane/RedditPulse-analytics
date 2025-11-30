@@ -177,11 +177,10 @@ The `landing_page` folder contains a modern showcase website for RedditPulse: ob
 
 To view the page, open `landing_page/index.html` in your browser.
 
------
-
-\<div align="center"\>
-\<sub\>Built by YADANI ADNANE, ZAHDINE AMINE, KELLAL YOUNESS, MANGACH AHMED for the Master's in Data Analytics & AI\</sub\>
-\</div\>
+---
+<div align="center">
+  <sub>Built by YADANI ADNANE, ZAHDINE AMINE, KELLAL YOUNESS, MANGACH AHMED for the Master's in Data Analytics & AI</sub>
+</div>
 
 ```
 ```
