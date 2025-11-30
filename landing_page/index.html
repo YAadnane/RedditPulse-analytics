@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedditPulse - Intelligence Artificielle & Big Data</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF4500; /* Reddit Orange-Red */
+            --secondary: #0079D3; /* Reddit Blue */
+            --text: #D7DADC;
+            --text-muted: #818384;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border_box;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-color: #030303;
+            cursor: none; /* Custom cursor */
+        }
+
+        /* Custom Cursor */
+        .cursor-dot,
+        .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+        }
+
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--primary);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+
+        body:hover .cursor-outline {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Dynamic Background */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1a1b 0%, #000000 100%);
+        }
+
+        /* Ambient Blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.3;
+            animation: floatBlob 20s infinite alternate;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: #FF4500; }
+        .blob-2 { bottom: 10%; right: -10%; width: 600px; height: 600px; background: #0079D3; animation-delay: -5s; }
+
+        @keyframes floatBlob {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        /* Utilities */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 32px;
+            border-radius: 999px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: none; /* Use custom cursor */
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #ff5414;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 69, 0, 0.6);
+        }
+
+        /* Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Header */
+        header {
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            background: rgba(26, 26, 27, 0.7);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+            cursor: none;
+        }
+
+        .logo span {
+            color: var(--primary);
+            font-size: 1.8rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { text-shadow: 0 0 0 rgba(255, 69, 0, 0.4); }
+            70% { text-shadow: 0 0 20px rgba(255, 69, 0, 0); }
+            100% { text-shadow: 0 0 0 rgba(255, 69, 0, 0); }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.3s;
+            cursor: none;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 200px 0 120px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .hero h1 span {
+            background: linear-gradient(to right, #FF4500, #FF8717, #0079D3, #FF4500);
+            background-size: 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientFlow 8s linear infinite;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .typewriter {
+            display: inline-block;
+            border-right: 3px solid var(--primary);
+            padding-right: 5px;
+            animation: blink 0.75s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: var(--primary); }
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.8);
+        }
+
+        /* Partners */
+        .partners {
+            padding: 40px 0;
+            border-bottom: 1px solid rgba(52, 53, 54, 0.5);
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .partners p {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .logos {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            flex-wrap: wrap;
+            opacity: 0.7;
+        }
+
+        .logo-item {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            transition: transform 0.3s, color 0.3s;
+            cursor: none;
+        }
+
+        .logo-item:hover {
+            color: var(--text);
+            transform: scale(1.1);
+        }
+
+        /* Features */
+        .features {
+            padding: 100px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+            perspective: 1000px; /* For 3D tilt */
+        }
+
+        .card {
+            background: rgba(26, 26, 27, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.1s, border-color 0.3s, background 0.3s, box-shadow 0.3s;
+            transform-style: preserve-3d;
+            cursor: none;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            background: rgba(26, 26, 27, 0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .card-content {
+            transform: translateZ(20px); /* Pop out effect */
+        }
+
+        .icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 69, 0, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 24px;
+            color: var(--primary);
+            animation: float 6s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.2);
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 100px 0;
+            background: rgba(15, 15, 15, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .review-card {
+            background: rgba(26, 26, 27, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(52, 53, 54, 0.5);
+            transition: transform 0.3s;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--secondary);
+        }
+
+        .stars {
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+
+        .review-text {
+            font-style: italic;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* Contact Section */
+        .contact {
+            padding: 100px 0;
+            background: rgba(3, 3, 3, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-container {
+            background: rgba(26, 26, 27, 0.7);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 60px;
+            border: 1px solid rgba(52, 53, 54, 0.5);
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(39, 39, 41, 0.8);
+            border: 1px solid #343536;
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            cursor: none;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #1A1A1B;
+            box-shadow: 0 0 15px rgba(255, 69, 0, 0.2);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            border-top: 1px solid #343536;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: rgba(26, 26, 27, 0.9);
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 15px; }
+
+            /* Header & Nav */
+            header { 
+                padding: 10px 0; 
+                background: rgba(26, 26, 27, 0.98);
+            }
+            nav { 
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
+            .nav-links { display: none; }
+            
+            .logo { font-size: 1rem; white-space: nowrap; }
+            .logo span { font-size: 1.2rem; }
+            
+            header .btn { 
+                padding: 8px 14px;
+                font-size: 0.7rem;
+                white-space: nowrap;
+            }
+            
+            /* Hero */
+            .hero { padding: 110px 0 50px; }
+            .hero h1 { font-size: 2rem; margin-bottom: 12px; line-height: 1.2; }
+            .hero p { font-size: 0.95rem; padding: 0 10px; }
+            
+            /* Sections */
+            .features, .testimonials, .contact { padding: 40px 0; }
+            .grid, .testimonial-grid { grid-template-columns: 1fr; gap: 20px; }
+            
+            /* Contact Form */
+            .contact-container { padding: 20px 15px; }
+            .contact form > div { grid-template-columns: 1fr !important; }
+            
+            /* Performance & Usability */
+            .cursor-dot, .cursor-outline { display: none; }
+            body, .btn, .logo, .nav-links a, .card, .form-control { cursor: auto; }
+            .blob { opacity: 0.15; }
+            .card { transform: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Background Elements -->
+    <canvas id="particle-canvas"></canvas>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo"><span>●</span> RedditPulse</div>
+                <ul class="nav-links">
+                    <li><a href="#features">Solutions</a></li>
+                    <li><a href="#testimonials">Avis</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+                <a href="#contact" class="btn btn-primary">Démarrer</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero reveal active">
+        <div class="container">
+            <h1>L'opinion publique<br><span id="typing-text" class="typewriter"></span></h1>
+            <p>Plongez au cœur des discussions Reddit. Analysez les sentiments, comparez votre marque et prenez des décisions basées sur la data réelle.</p>
+            <div style="margin-top: 30px;">
+                <a href="#contact" class="btn btn-primary">Lancer une Analyse Gratuite</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="partners reveal">
+        <div class="container">
+            <p>Ils nous font confiance</p>
+            <div class="logos">
+                <div class="logo-item">GOOGLE</div>
+                <div class="logo-item">AMAZON</div>
+                <div class="logo-item">TESLA</div>
+                <div class="logo-item">MICROSOFT</div>
+                <div class="logo-item">OPENAI</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features reveal">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 60px;">
+                <h2 style="font-size: 2rem; margin-bottom: 16px;">Technologie Big Data</h2>
+                <p style="color: var(--text-muted);">Une suite d'outils puissants pour votre veille stratégique.</p>
+            </div>
+            <div class="grid">
+                <div class="card" data-tilt>
+                    <div class="card-content">
+                        <div class="icon">🔍</div>
+                        <h3>Veille Stratégique</h3>
+                        <p>Surveillance continue des subreddits pertinents pour ne manquer aucune mention de votre marque.</p>
+                    </div>
+                </div>
+                <div class="card" data-tilt>
+                    <div class="card-content">
+                        <div class="icon">⚡</div>
+                        <h3>Analyse IA</h3>
+                        <p>Algorithmes de NLP avancés pour détecter les sentiments, l'ironie et les tendances émergentes.</p>
+                    </div>
+                </div>
+                <div class="card" data-tilt>
+                    <div class="card-content">
+                        <div class="icon">📈</div>
+                        <h3>Benchmarking</h3>
+                        <p>Comparez vos métriques de satisfaction directement avec celles de vos concurrents.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="testimonials" class="testimonials reveal">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h2 style="font-size: 2rem;">Ce que disent nos clients</h2>
+            </div>
+            <div class="testimonial-grid">
+                <div class="review-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="review-text">"RedditPulse nous a permis de comprendre pourquoi notre dernier produit recevait des avis mitigés. L'analyse des sentiments est incroyablement précise."</p>
+                    <div class="user-info">
+                        <div class="avatar">S</div>
+                        <div>
+                            <strong>Sophie Martin</strong><br>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">CMO, TechStart</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="review-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="review-text">"L'outil de comparaison avec la concurrence est un game-changer. Nous avons ajusté notre stratégie marketing en temps réel."</p>
+                    <div class="user-info">
+                        <div class="avatar" style="background: #0079D3;">T</div>
+                        <div>
+                            <strong>Thomas Dubois</strong><br>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Product Manager, SoftCorp</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="review-card">
+                    <div class="stars">★★★★☆</div>
+                    <p class="review-text">"Interface intuitive et données très riches. Le support est aussi très réactif pour les demandes spécifiques."</p>
+                    <div class="user-info">
+                        <div class="avatar" style="background: #24A0ED;">L</div>
+                        <div>
+                            <strong>Léa Bernard</strong><br>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Data Analyst, ConsultAgency</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact reveal">
+        <div class="container">
+            <div class="contact-container">
+                <h2 style="font-size: 2rem; margin-bottom: 16px;">Prêt à dominer votre marché ?</h2>
+                <p style="color: var(--text-muted); margin-bottom: 40px;">Remplissez ce formulaire pour demander une démonstration ou une analyse personnalisée.</p>
+                
+                <form>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Nom complet</label>
+                            <input type="text" class="form-control" placeholder="Jean Dupont">
+                        </div>
+                        <div class="form-group">
+                            <label>Email professionnel</label>
+                            <input type="email" class="form-control" placeholder="jean@entreprise.com">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Produit / Marque à analyser</label>
+                        <input type="text" class="form-control" placeholder="Ex: iPhone 15, Tesla Model 3...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message / Besoins spécifiques</label>
+                        <textarea class="form-control" placeholder="Je souhaite comparer mon produit avec..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Envoyer la demande</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 RedditPulse. Propulsé par Big Data & IA.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Custom Cursor
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+
+        window.addEventListener('mousemove', (e) => {
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+
+            // Add a slight delay for the outline for a fluid feel
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 500, fill: "forwards" });
+        });
+
+        // Hover effects for cursor
+        document.querySelectorAll('a, button, .card, input, textarea').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                cursorOutline.style.backgroundColor = 'rgba(255, 69, 0, 0.1)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1)';
+                cursorOutline.style.backgroundColor = 'transparent';
+            });
+        });
+
+        // 2. Typing Effect
+        const textElement = document.getElementById('typing-text');
+        const phrases = ["décodée par l'IA", "analysée par le Big Data", "révélée par Reddit"];
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let typeSpeed = 100;
+
+        function type() {
+            const currentPhrase = phrases[phraseIndex];
+            
+            if (isDeleting) {
+                textElement.textContent = currentPhrase.substring(0, charIndex - 1);
+                charIndex--;
+                typeSpeed = 50;
+            } else {
+                textElement.textContent = currentPhrase.substring(0, charIndex + 1);
+                charIndex++;
+                typeSpeed = 100;
+            }
+
+            if (!isDeleting && charIndex === currentPhrase.length) {
+                isDeleting = true;
+                typeSpeed = 2000; // Pause at end
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                phraseIndex = (phraseIndex + 1) % phrases.length;
+                typeSpeed = 500; // Pause before typing next
+            }
+
+            setTimeout(type, typeSpeed);
+        }
+        document.addEventListener('DOMContentLoaded', type);
+
+        // 3. 3D Tilt Effect for Cards
+        const cards = document.querySelectorAll('.card');
+        
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10; // Max rotation deg
+                const rotateY = ((x - centerX) / centerX) * 10;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            });
+        });
+
+        // 4. Scroll Reveal
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 150;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal();
+
+        // 5. Particle Network Animation
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray;
+
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.directionX = (Math.random() * 0.4) - 0.2;
+                this.directionY = (Math.random() * 0.4) - 0.2;
+                this.size = (Math.random() * 2) + 1;
+                this.color = '#FF4500';
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 15000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                    + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    
+                    if (distance < (canvas.width/7) * (canvas.height/7)) {
+                        opacityValue = 1 - (distance/20000);
+                        ctx.strokeStyle = 'rgba(255, 69, 0,' + opacityValue * 0.15 + ')';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        init();
+        animate();
+    </script>
+
+</body>
+</html>

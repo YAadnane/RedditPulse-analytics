@@ -1,0 +1,8 @@
+streamlit
+pandas
+altair
+fpdf
+matplotlib
+google-generativeai
+reportlab
+pdfkit

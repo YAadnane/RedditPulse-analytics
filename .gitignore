@@ -1,0 +1,23 @@
+# Fichiers Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Fichiers de données locaux
+*.csv
+*.json
+*.log
+
+# Variables d'environnement
+.env
+
+# Fichiers IDE
+.vscode/
+.idea/
+
+# Fichiers Docker
+docker-compose.override.yml
