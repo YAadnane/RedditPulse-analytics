@@ -1,8 +1,8 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lower, regexp_replace, udf, expr
+from pyspark.sql.functions import col, udf, expr
 from pyspark.sql.types import StringType, FloatType
 import sys
-import os
+ # import inutilisé supprimé
 
 # Configuration Spark
 spark = (

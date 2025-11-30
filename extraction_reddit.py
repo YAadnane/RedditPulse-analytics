@@ -2,7 +2,7 @@ import praw
 import pandas as pd
 import argparse
 import os
-import sys
+ # import inutilisé supprimé
 
 # Configuration Reddit (Récupérée depuis votre ancien script)
 CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "your_client_id")
