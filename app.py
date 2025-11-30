@@ -3,7 +3,6 @@ import subprocess
 import pandas as pd
 import os
 import sys
- # import inutilisé supprimé
 import shutil
 import io
 import altair as alt
